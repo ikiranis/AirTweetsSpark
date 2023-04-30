@@ -1,4 +1,5 @@
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{col, lower, regexp_replace}
 
 object AirTweets {
     def main(args: Array[String]): Unit = {
@@ -11,7 +12,12 @@ object AirTweets {
         val inputFile = "input/tweets.csv"
         val outputDir = "output"
 
+        // Διάβασμα του αρχείου csv
         val df = ss.read.option("header", "true").csv(inputFile)
+            // Αφαίρεση σημείων στίξης από τη στήλη text. Μετατροπή όλων των χαρακτήρων σε πεζά.
+            .withColumn("text", regexp_replace(col("text"), "[^A-Za-z0-9]+", " "))
+            .withColumn("text", lower(col("text")))
+
 
         // Show the first few lines of the DataFrame
         df.show()
