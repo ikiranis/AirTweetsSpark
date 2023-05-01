@@ -1,5 +1,5 @@
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, lower, regexp_replace}
+import org.apache.spark.sql.functions.{col, explode, lit, lower, regexp_replace, split}
 
 object AirTweets {
     def main(args: Array[String]): Unit = {
@@ -18,17 +18,20 @@ object AirTweets {
             .withColumn("text", regexp_replace(col("text"), "[^A-Za-z0-9]+", " "))
             .withColumn("text", lower(col("text")))
 
+        val sentiment_values = Seq("positive", "negative", "neutral")
 
-        // Show the first few lines of the DataFrame
-        df.show()
+        sentiment_values.foreach(sentiment => {
+            println(s"Top 5 words for $sentiment tweets")
 
-        // Print the schema of the DataFrame
-        df.printSchema()
+            df.select(explode(split(df("text"), "\\s+")).alias("word"))
+                .filter(col("word") =!= "")
+                .filter(col("airline_sentiment") === sentiment)
+                .groupBy("word").count()
+                .sort(col("count").desc)
+                .show(5)
+        })
 
-        // Διάβασμα του αρχείου και αφαίρεση σημείων στίξης. Μετατροπή όλων των χαρακτήρων σε πεζά.
-//        val txtFile = ss.textFile(inputFile)
-//            .map(_.replaceAll("[^A-Za-z0-9]+", " "))
-//            .map(_.toLowerCase)
+
     }
 
 }
